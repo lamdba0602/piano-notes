@@ -115,7 +115,7 @@ svg.staff{width:100%;min-width:560px;max-width:760px;height:auto;margin:0 auto}
 .mnemo .tip .letters{font-family:var(--f-letter);font-weight:700;font-size:26px;letter-spacing:.18em;color:var(--ink);margin:2px 0 4px}
 
 /* grand staff: treble + bass over the keys, one column per white key */
-svg.grand{width:100%;min-width:820px;height:auto}
+svg.grand{width:100%;max-width:780px;margin:0 auto;height:auto}
 .gcol{cursor:pointer;outline:none}
 .gbg{fill:var(--accent);fill-opacity:0}
 .gcol:hover .gbg{fill-opacity:.06}
@@ -143,7 +143,7 @@ svg.grand{width:100%;min-width:820px;height:auto}
 .ptable .chip{display:inline-block;min-width:1.6em;text-align:center;border-radius:6px;padding:0 5px;color:var(--chip-ink);font-family:var(--f-letter);font-weight:700;margin-right:6px}
 .ptable .so{font-family:var(--f-letter);font-weight:700;display:inline-block;min-width:2.2em}
 .ptable td.mc{box-shadow:inset 0 0 0 2px var(--accent);border-radius:6px}
-@media (max-width:700px){svg.grand{min-width:1000px}}
+@media (max-width:700px){svg.grand{min-width:640px}}
 
 /* practice */
 .quiz-bar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px}
@@ -314,7 +314,7 @@ footer{color:var(--muted);font-size:14px}
     <div class="sec-head">
       <span class="step">第四步 · 左手也认识</span>
       <h2>高音谱号、低音谱号和整排琴键</h2>
-      <p>钢琴谱一般有上下两行：<b>上面是高音谱号</b>，多数是右手弹；<b>下面是低音谱号</b>，多数是左手弹。下面这张图里，每一列从上到下是同一个音：五线谱上的位置、唱名、简谱、琴键，<b>上下对齐</b>。</p>
+      <p>这里只画中央 C 左右各一组：左边 8 个键（低音 do 到中央 C）多数用低音谱号、左手弹；右边 8 个键（中央 C 到高音 do）多数用高音谱号、右手弹。钢琴谱一般有上下两行：<b>上面是高音谱号</b>，多数是右手弹；<b>下面是低音谱号</b>，多数是左手弹。下面这张图里，每一列从上到下是同一个音：五线谱上的位置、唱名、简谱、琴键，<b>上下对齐</b>。</p>
     </div>
     <div class="panel">
       <p class="g-hint">点任意一列（音符或琴键）能听到声音，下面会显示它的位置。手机上可以左右滑动这张图。</p>
@@ -409,7 +409,7 @@ footer{color:var(--muted);font-size:14px}
     </div>
   </section>
 
-  <footer>第一到第三步只画了中央 C 到高音 C 这一段，这是新手最先用到的 8 个音；第四步把范围扩大到 C2～C6，覆盖初学曲子常用的音区。</footer>
+  <footer>第一到第三步只画了中央 C 到高音 C 这一段，这是新手最先用到的 8 个音；第四步把范围扩大到中央 C 左右各一组，左手和右手最常用的就是这一段。</footer>
 </div>
 
 <script>
@@ -539,15 +539,16 @@ footer{color:var(--muted);font-size:14px}
   document.getElementById('kb-main').innerHTML=keyboard({labels:true,mid:true});
   document.getElementById('staff-main').innerHTML=staff(NOTES.map(function(n){return n.id}),{labels:true,colors:true});
 
-  /* grand staff C2–C6: column i = white key i; treble shows d>=0, bass shows d<=0 (C4 on both) */
+  /* grand staff C3–C5: column i = white key i; treble shows d>=0, bass shows d<=0 (C4 on both) */
   const SOL=['do','re','mi','fa','sol','la','si'], SEMI=[0,2,4,5,7,9,11], CN=['一','二','三','四','五','六','七'];
-  const GN=[];
-  for(let o=2;o<=6;o++) for(let k=0;k<7;k++){
-    if(o===6&&k>0) break;
-    const d=(o-4)*7+k;
-    GN.push({id:LETTERS[k]+o,l:LETTERS[k],k:k,o:o,d:d,s:SOL[k],n:String(k+1),dots:o-4,
-      f:261.63*Math.pow(2,((o-4)*12+SEMI[k])/12)});
+  function mk(d){
+    const o=4+Math.floor(d/7), k=((d%7)+7)%7;
+    return {id:LETTERS[k]+o,l:LETTERS[k],k:k,o:o,d:d,s:SOL[k],n:String(k+1),dots:o-4,
+      f:261.63*Math.pow(2,((o-4)*12+SEMI[k])/12)};
   }
+  /* chart range: one octave each side of middle C (C3 … C4 … C5) */
+  const GN=[]; for(let d=-7;d<=7;d++) GN.push(mk(d));
+  const G_CW=44, G_L=72, G_MID=7;
   function posName(s){
     if(s>=0&&s<=8) return s%2===0?'第'+CN[s/2]+'线':'第'+CN[(s-1)/2]+'间';
     const k=s>8?s-8:-s, pre=s>8?'上加':'下加';
@@ -568,11 +569,11 @@ footer{color:var(--muted);font-size:14px}
     return g.n;
   }
   function grand(){
-    const cw=32, L=72, n=GN.length, W=L+n*cw+6, sp=10;
-    const tTop=36, tBot=tTop+4*sp, bTop=124, bBot=bTop+4*sp;
-    const labY=204, kTop=254, kH=124, H=kTop+kH+30, bw=20, bh=78;
+    const cw=G_CW, L=G_L, n=GN.length, W=L+n*cw+6, sp=10;
+    const tTop=36, tBot=tTop+4*sp, bTop=118, bBot=bTop+4*sp;
+    const labY=bBot+30, kTop=labY+46, kH=130, H=kTop+kH+30, bw=26, bh=82;
     const yT=function(s){return tBot-s*sp/2}, yB=function(s){return bBot-s*sp/2};
-    let s='<svg class="grand" viewBox="0 0 '+W+' '+H+'" role="group" aria-label="大谱表和琴键对照，从 C2 到 C6">';
+    let s='<svg class="grand" viewBox="0 0 '+W+' '+H+'" role="group" aria-label="大谱表和琴键对照，中央C左右各一组">';
     for(let i=0;i<5;i++){
       s+='<line class="sl" x1="4" x2="'+(W-2)+'" y1="'+(tTop+i*sp)+'" y2="'+(tTop+i*sp)+'"/>';
       s+='<line class="sl" x1="4" x2="'+(W-2)+'" y1="'+(bTop+i*sp)+'" y2="'+(bTop+i*sp)+'"/>';
@@ -608,10 +609,8 @@ footer{color:var(--muted);font-size:14px}
         s+='<circle class="gdot" cx="'+x+'" cy="'+dy+'" r="1.7"/>';
       }
       s+='<rect class="kw" x="'+x0+'" y="'+kTop+'" width="'+cw+'" height="'+kH+'" rx="4"/>';
-      s+='<circle cx="'+x+'" cy="'+(kTop+kH-18)+'" r="12" style="fill:var(--c-'+g.l+')"/>';
-      s+='<text class="gk" x="'+x+'" y="'+(kTop+kH-13)+'">'+g.l+'</text>';
+      s+='<rect x="'+(x0+7)+'" y="'+(kTop+kH-20)+'" width="'+(cw-14)+'" height="10" rx="5" style="fill:var(--c-'+g.l+')"/>';
       if(g.d===0) s+='<text class="gmid" x="'+x+'" y="'+(kTop+kH+18)+'">中央C</text>';
-      else if(g.k===0) s+='<text class="goct" x="'+x+'" y="'+(kTop+kH+18)+'">'+g.id+'</text>';
       s+='</g>';
     });
     GN.forEach(function(g,i){
@@ -625,7 +624,7 @@ footer{color:var(--muted);font-size:14px}
   (function(){
     const rows=[];
     for(let st=10;st>=-2;st--){
-      const t=GN.find(function(g){return g.d===st+2}), b=GN.find(function(g){return g.d===st-10});
+      const t=mk(st+2), b=mk(st-10);
       const cell=function(g){return '<td'+(g.d===0?' class="mc"':'')+'>'+chip(g)+'<span class="so">'+g.s+'</span>'+jp(g)+'</td>';};
       rows.push('<tr'+(st%2===0?' class="ln"':'')+'><td class="pp">'+posName(st)+'</td>'+cell(t)+cell(b)+'</tr>');
     }
@@ -671,7 +670,7 @@ footer{color:var(--muted);font-size:14px}
     const wrap=document.getElementById('grand-wrap'), svg=wrap.querySelector('svg');
     if(!svg||wrap.scrollWidth<=wrap.clientWidth+2) return;
     const w=svg.getBoundingClientRect().width, vb=svg.viewBox.baseVal.width;
-    const cx=(72+14*32+16)/vb*w;
+    const cx=(G_L+G_MID*G_CW+G_CW/2)/vb*w;
     wrap.scrollLeft=Math.max(0,cx-wrap.clientWidth/2);
   });
 
